@@ -20,7 +20,7 @@
 
 /*------------CONFIG------------*/
 #define NRF24_CONFIG_REG 						((uint8_t)0x00) //Register
-#define NRF24_CONFIG_RX_DR 						((uint8_t)0x06)	//here and below the number is the position of the bit
+#define NRF24_CONFIG_MASK_RX_DR 						((uint8_t)0x06)	//here and below the number is the position of the bit
 #define NRF24_CONFIG_MASK_TX_DS 				((uint8_t)0x05)
 #define NRF24_CONFIG_MASK_MAX_RT 				((uint8_t)0x04)
 #define NRF24_CONFIG_EN_CRC 					((uint8_t)0x03)

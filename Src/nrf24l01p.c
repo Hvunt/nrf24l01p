@@ -8,7 +8,7 @@
 static SPI_HandleTypeDef *hspi;
 static NRF24_CECSN_pin NRF24_CECSN_pins;
 
-//uint8_t temp_nrf;
+uint8_t temp_nrf;
 
 void NRF24_Init(SPI_HandleTypeDef *hspiP, GPIO_TypeDef *GPIO_Port_CE,
 		GPIO_TypeDef *GPIO_Port_CSN, uint16_t ce_pin, uint16_t csn_pin) {
@@ -209,11 +209,11 @@ uint8_t NRF24_GetPayloadSize(uint8_t pipe) {
 }
 
 void NRF24_OpenRxPipe(uint8_t *address, uint8_t pipe) {
-	uint8_t length = sizeof(address);
+	uint8_t length = 5;
 	uint8_t buffer[length + 1];
 
-	for (int i = 1; i <= length; i++) {
-		buffer[i] = address[i];
+	for (uint8_t i = 1; i <= length; i++) {
+		buffer[i] = address[i-1];
 	}
 
 	switch (pipe) {
@@ -238,7 +238,7 @@ void NRF24_OpenRxPipe(uint8_t *address, uint8_t pipe) {
 	}
 
 	NRF24_CSN_ONOFF(NRF24_CSN_OFF);
-	HAL_SPI_Transmit(hspi, buffer, sizeof(buffer), 100);
+	HAL_SPI_Transmit(hspi, buffer, (length + 1), 100);
 	NRF24_CSN_ONOFF(NRF24_CSN_ON);
 
 	NRF24_SetMode(NRF24_MODE_RX);
@@ -247,16 +247,17 @@ void NRF24_OpenRxPipe(uint8_t *address, uint8_t pipe) {
 }
 
 void NRF24_SetTxAdress(uint8_t *address) {
-	uint8_t length = sizeof(address);
+	uint8_t length = 5;
 	uint8_t buffer[length + 1];
 
 	buffer[0] = NRF24_COMMAND_WRITE_REG | NRF24_TX_ADDR;
-	for (int i = 1; i <= length + 1; i++) {
-		buffer[i] = address[i];
+
+	for (uint8_t i = 1; i <= length + 1; i++) {
+		buffer[i] = address[i-1];
 	}
 
 	NRF24_CSN_ONOFF(NRF24_CSN_OFF);
-	HAL_SPI_Transmit(hspi, buffer, sizeof(buffer), 100);
+	HAL_SPI_Transmit(hspi, buffer, (length + 1), 100);
 	NRF24_CSN_ONOFF(NRF24_CSN_ON);
 }
 
@@ -416,9 +417,11 @@ void NRF24_Receive(uint8_t *data, uint8_t length) {
 	if (bit_state != 0)
 		NRF24_FlushRx();
 
+	temp_nrf = NRF24_GetStatus();
 	NRF24_WriteReg(NRF24_STATUS_REG,
 			(NRF24_STATUS_RX_DR | NRF24_STATUS_TX_DS | NRF24_STATUS_MAX_RT)
 					<< 4);
+	temp_nrf = NRF24_GetStatus();
 }
 
 void NRF24_Transmit(uint8_t *data, uint8_t length) {
@@ -447,7 +450,9 @@ void NRF24_Transmit(uint8_t *data, uint8_t length) {
 	NRF24_SetMode(NRF24_MODE_RX);
 	NRF24_CE_ONOFF(NRF24_CE_OFF);
 
+	temp_nrf = NRF24_GetStatus();
 	NRF24_WriteReg(NRF24_STATUS_REG,
 			(NRF24_STATUS_RX_DR | NRF24_STATUS_TX_DS | NRF24_STATUS_MAX_RT)
 					<< 4);
+	temp_nrf = NRF24_GetStatus();
 }
