@@ -47,7 +47,6 @@ void NRF24_WakeUp(void) {
 	uint8_t buffer = NRF24_ReadReg(NRF24_CONFIG_REG);
 	buffer |= 1 << NRF24_CONFIG_PWR_UP;
 	NRF24_WriteReg(NRF24_CONFIG_REG, buffer);
-	HAL_Delay(5);
 }
 
 void NRF24_FallAsleep(void) {
@@ -280,7 +279,7 @@ void NRF24_GetTxAdress(uint8_t* address, uint8_t length) {
 			100);
 	NRF24_CSN_ONOFF(NRF24_CSN_ON);
 
-	for (int i = 0; i <= length; i++) {
+	for (uint8_t i = 0; i <= length; i++) {
 		address[i] = receive_buffer[i];
 	}
 }
@@ -417,11 +416,9 @@ void NRF24_Receive(uint8_t *data, uint8_t length) {
 	if (bit_state != 0)
 		NRF24_FlushRx();
 
-	temp_nrf = NRF24_GetStatus();
 	NRF24_WriteReg(NRF24_STATUS_REG,
 			(NRF24_STATUS_RX_DR | NRF24_STATUS_TX_DS | NRF24_STATUS_MAX_RT)
 					<< 4);
-	temp_nrf = NRF24_GetStatus();
 }
 
 void NRF24_Transmit(uint8_t *data, uint8_t length) {
@@ -433,26 +430,22 @@ void NRF24_Transmit(uint8_t *data, uint8_t length) {
 		buffer[i] = data[i - 1];
 	}
 
-	uint8_t bit_state = NRF24_ReadBit(NRF24_STATUS_REG, NRF24_STATUS_TX_FULL);
-	if (bit_state != 0) {
-		NRF24_FlushTx();
-		HAL_Delay(2);
-	}
-
 	NRF24_SetMode(NRF24_MODE_TX);
 
 	NRF24_CSN_ONOFF(NRF24_CSN_OFF);
 	HAL_SPI_TransmitReceive(hspi, buffer, rxbuffer, (length + 1), 100);
 	NRF24_CSN_ONOFF(NRF24_CSN_ON);
 
+	NRF24_CE_ONOFF(NRF24_CE_OFF);
+	HAL_Delay(2);
 	NRF24_CE_ONOFF(NRF24_CE_ON);
 	HAL_Delay(2);
-	NRF24_SetMode(NRF24_MODE_RX);
 	NRF24_CE_ONOFF(NRF24_CE_OFF);
+	NRF24_SetMode(NRF24_MODE_RX);
+	NRF24_CE_ONOFF(NRF24_CE_ON);
 
-	temp_nrf = NRF24_GetStatus();
+	NRF24_FlushTx();
 	NRF24_WriteReg(NRF24_STATUS_REG,
 			(NRF24_STATUS_RX_DR | NRF24_STATUS_TX_DS | NRF24_STATUS_MAX_RT)
 					<< 4);
-	temp_nrf = NRF24_GetStatus();
 }
